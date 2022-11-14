@@ -21,19 +21,47 @@ task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
 
 // You need to export an object to set up your config
 // Go to https://hardhat.org/config/ to learn more
+const GWEI = 1000000000;
+const accounts = process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : []
 
 const config: HardhatUserConfig = {
   solidity: "0.8.4",
   networks: {
-    ropsten: {
-      url: process.env.ROPSTEN_URL || "",
-      accounts:
-        process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
+    matictest: {
+      url: "https://rpc.ankr.com/polygon_mumbai",
+      accounts: accounts,
+      chainId: 80001
     },
     ftmtest: {
       url: "https://rpc.ankr.com/fantom_testnet",
-      accounts:
-        process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
+      accounts: accounts,
+    },
+    avaxtest: {
+      url: "https://api.avax-test.network/ext/bc/C/rpc",
+      chainId: 43113,
+      accounts: accounts
+    },
+    bsctest: {
+      url: "https://bsctestapi.terminet.io/rpc",
+      chainId: 97,
+      accounts: accounts
+    },
+
+    polygon: {
+      url: "https://polygon-rpc.com",
+      gasPrice: 30 * GWEI,
+      accounts: accounts,
+    },
+    ftm: {
+      url: "https://rpc3.fantom.network",
+      gasPrice: 2 * GWEI,
+      accounts: accounts,
+    },
+    avax: {
+      url: "https://api.avax.network/ext/bc/C/rpc",
+      gasPrice: 2 * GWEI,
+      chainId: 43114,
+      accounts: accounts,
     },
   },
   gasReporter: {
