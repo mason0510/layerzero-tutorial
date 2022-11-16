@@ -2,14 +2,19 @@
   "name": "layerzero-tutorial",
   "proxy": "http://127.0.0.1:7890",
   "scripts": {
-    "chain": "npx hardhat node",
-    "test": "npx hardhat test",
-    "deploy": "npx hardhat run scripts/deploy.ts"
+    "chain": "hardhat node",
+    "test": "hardhat test",
+    "compile": "hardhat compile",
+    "deploy": "hardhat deploy",
+    "postdeploy": "hardhat run scripts/publish.ts"
   },
   "devDependencies": {
-    "@nomiclabs/hardhat-ethers": "^2.2.1",
+    "@layerzerolabs/scan-client": "^0.0.0-beta.6",
+    "@layerzerolabs/solidity-examples": "https://github.com/LayerZero-Labs/solidity-examples.git",
+    "@nomiclabs/hardhat-ethers": "npm:hardhat-deploy-ethers@^0.3.0-beta.13",
     "@nomiclabs/hardhat-etherscan": "^3.1.2",
     "@nomiclabs/hardhat-waffle": "^2.0.3",
+    "@openzeppelin/contracts": "^4.7.3",
     "@typechain/ethers-v5": "^7.2.0",
     "@typechain/hardhat": "^2.3.1",
     "@types/chai": "^4.3.4",
@@ -29,6 +34,7 @@
     "ethereum-waffle": "^3.4.4",
     "ethers": "^5.7.2",
     "hardhat": "^2.12.2",
+    "hardhat-deploy": "^0.11.20",
     "hardhat-gas-reporter": "^1.0.9",
     "prettier": "^2.7.1",
     "prettier-plugin-solidity": "^1.0.0-beta.13",
