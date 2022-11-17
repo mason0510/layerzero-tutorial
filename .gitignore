@@ -10,3 +10,4 @@ artifacts
 deployments/*
 .DS_Store
 article.md
+.vscode

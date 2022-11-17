@@ -24,8 +24,6 @@ task("cross", "NFT Cross Chain Task")
             sandbox: 'https://api-sandbox.layerzero-scan.com',
         };
 
-        const contracts = {};
-
         for (let i = 0; i < deployContractData.length; i++) {
             const item = deployContractData[i];
             const factory = await ethers.getContractFactory(item.contractName);
@@ -44,15 +42,7 @@ task("cross", "NFT Cross Chain Task")
             return
         }
 
-        let EndpointABI = [
-            "function retryPayload(uint16 _srcChainId, bytes calldata _srcAddress, bytes calldata _payload) external",
-            "function storedPayload(uint16 _srcChainId, bytes calldata _srcAddress) view"
-        ];
-
-        const EndpointContractFactory = new ethers.Contract(srcCrossChainData.endpoint, EndpointABI, deployer);
-        const EndpointContract = await EndpointContractFactory.attach(srcCrossChainData.endpoint);
-        const LandPawnshopContract = contracts["PPXLandPawnshop"]?.contract;
-        const contract = contracts[contractName(network?.name)];
+        const contract = deployContracts[contractName(network?.name)];
         const LandContract = contract?.contract;
         let dstChainId = BigNumber.from(dstCrossChainData.chainId);
         const trustedRemote = await LandContract.trustedRemoteLookup(dstChainId);
@@ -66,33 +56,69 @@ task("cross", "NFT Cross Chain Task")
             fromChain: {
                 chainId: srcCrossChainData.chainId,
                 endpoint: `${srcCrossChainData.blockscan}/address/${srcCrossChainData.endpoint}`,
-                contract: `${srcCrossChainData.blockscan}/address/${LandContract.address}`,
+                ppxland: `${srcCrossChainData.blockscan}/address/${LandContract.address}`,
                 network: network.name
             },
             toChain: {
                 chainId: dstCrossChainData.chainId,
                 endpoint: `${dstCrossChainData.blockscan}/address/${dstCrossChainData.endpoint}`,
-                contract: `${dstCrossChainData.blockscan}/address/${toData[0].address}`,
+                ppxland: `${dstCrossChainData.blockscan}/address/${toData[0].address}`,
                 network: toData[0].netName,
                 trustedRemote,
             },
             ids: taskArgs.ids,
-            pawnshop: LandPawnshopContract?.address ? `${networks[landMintNetwork]?.blockscan}/address/${LandPawnshopContract?.address}` : "The Chain No Deploy Pawnshop Contract"
         }
         console.log(output);
 
-        return
-
-        let id = taskArgs?.id, res;
+        let ids = taskArgs?.ids?.split(",") || [], res, asstes;
+        const receiver = taskArgs.address || deployer.address;
 
         switch (taskArgs.type) {
             case "mint":
-                res = await LandContract.mint(taskArgs.address || deployer.address, id);
+                res = await LandContract.mint(receiver, ids);
                 break;
+            case "trust":
+                if (!isSetTrustedRemote) {
+                    await LandContract.setTrustedRemote(dstChainId, dstTrustedRemote);
+                } else {
+                    console.log("seted")
+                    return
+                }
+                break;
+            case "cross":
+                asstes = {
+                    owner: receiver,
+                    ids
+                }
+                let adapterParams = ethers.utils.solidityPack(
+                    ['uint16', 'uint256'],
+                    [1, 200000 + ids.length * 50000]
+                )
+                const fees = await LandContract.estimateFees(
+                    dstChainId,
+                    toData[0].address,
+                    asstes,
+                    adapterParams);
+                const fee = ethers.utils.formatEther(fees.toString());
+
+                if (Number(ethers.utils.formatEther(fees.toString())) > 0.01) {
+                    console.log("pause cross chain", fee)
+                    return
+                }
+
+                res = await LandContract.crossChain(receiver, dstChainId, ids, adapterParams, {
+                    value: fees
+                });
+                break;
+
             default:
                 console.log(`❌ type: ${taskArgs.type}, type error`);
                 return
         }
-        res?.hash && console.log(`${res?.hash}`)
+        if (res && taskArgs.type === "cross") {
+            console.log(`${dstCrossChainData.chainId > 1000 ? URLS["testnet"] : URLS["mainnet"]}/tx/${res.hash}`)
+        } else {
+            res && console.log(`${srcCrossChainData.blockscan}/tx/${res.hash}`)
+        }
         console.log(`✅ ${taskArgs.type} success`);
     });

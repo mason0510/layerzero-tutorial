@@ -1,12 +1,35 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-import "@layerzerolabs/solidity-examples/contracts/lzApp/NonblockingLzApp.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract PPXLand is ERC721, NonblockingLzApp {
+interface ILayerZeroEndpoint {
+    function send(
+        uint16 _dstChainId,
+        bytes calldata _destination,
+        bytes calldata _payload,
+        address payable _refundAddress,
+        address _zroPaymentAddress,
+        bytes calldata _adapterParams
+    ) external payable;
+
+    function estimateFees(
+        uint16 _dstChainId,
+        address _userApplication,
+        bytes calldata _payload,
+        bool _payInZRO,
+        bytes calldata _adapterParam
+    ) external view returns (uint256 nativeFee, uint256 zroFee);
+}
+
+contract PPXLand is ERC721, Ownable {
     uint256 private _lock = 1;
     uint256 internal _id;
+    ILayerZeroEndpoint public immutable lzEndpoint;
+
+    mapping(uint16 => bytes) public trustedRemoteLookup;
+    event SetTrustedRemote(uint16 _remoteChainId, bytes _path);
 
     struct Assets {
         address owner;
@@ -14,10 +37,9 @@ contract PPXLand is ERC721, NonblockingLzApp {
     }
     event CrossEvent(address from, uint16 chainId, uint256[] ids);
 
-    constructor(address _endpoint)
-        ERC721("PPXLand", "PPXL")
-        NonblockingLzApp(_endpoint)
-    {}
+    constructor(address _endpoint) ERC721("PPXLand", "PPXL") {
+        lzEndpoint = ILayerZeroEndpoint(_endpoint);
+    }
 
     modifier lock() {
         require(_lock == 1, "LOCKED");
@@ -52,23 +74,36 @@ contract PPXLand is ERC721, NonblockingLzApp {
         }
         bytes memory _payload = abi.encode(Assets(_receiver, _ids));
 
-        _lzSend(
+        lzEndpoint.send{value: msg.value}(
             _dstChainId,
+            trustedRemoteLookup[_dstChainId],
             _payload,
             payable(msg.sender),
             address(this),
-            _adapterParams,
-            msg.value
+            _adapterParams
         );
         emit CrossEvent(msg.sender, _dstChainId, _ids);
     }
 
-    function _nonblockingLzReceive(
+    function lzReceive(
         uint16 _srcChainId,
-        bytes memory,
+        bytes calldata _srcAddress,
         uint64,
-        bytes memory _payload
-    ) internal override {
+        bytes calldata _payload
+    ) public virtual {
+        require(
+            _msgSender() == address(lzEndpoint),
+            "LzApp: invalid endpoint caller"
+        );
+
+        bytes memory trustedRemote = trustedRemoteLookup[_srcChainId];
+        require(
+            _srcAddress.length == trustedRemote.length &&
+                trustedRemote.length > 0 &&
+                keccak256(_srcAddress) == keccak256(trustedRemote),
+            "LzApp: invalid source sending contract"
+        );
+
         Assets memory assets = abi.decode(_payload, (Assets));
 
         uint256[] memory ids = assets.ids;
@@ -96,32 +131,25 @@ contract PPXLand is ERC721, NonblockingLzApp {
 
     function estimateFees(
         uint16 _dstChainId,
-        Assets[] memory _assets,
+        address _userApplication,
+        Assets memory _assets,
         bytes memory _adapterParams
-    ) external view returns (uint256) {
+    ) external view returns (uint256 fee) {
         bytes memory _payload = abi.encode(_assets);
-        return _estimateFees(_dstChainId, _payload, _adapterParams);
-    }
-
-    function _estimateFees(
-        uint16 _dstChainId,
-        bytes memory _payload,
-        bytes memory _adapterParams
-    ) private view returns (uint256 fee) {
-        bytes memory _dstContractAddress = trustedRemoteLookup[_dstChainId];
-
-        address _contractAddress;
-
-        assembly {
-            _contractAddress := mload(add(_dstContractAddress, 20))
-        }
-
         (fee, ) = lzEndpoint.estimateFees(
             _dstChainId,
-            _contractAddress,
+            _userApplication,
             _payload,
             false,
             _adapterParams
         );
+    }
+
+    function setTrustedRemote(uint16 _srcChainId, bytes calldata _path)
+        external
+        onlyOwner
+    {
+        trustedRemoteLookup[_srcChainId] = _path;
+        emit SetTrustedRemote(_srcChainId, _path);
     }
 }

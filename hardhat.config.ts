@@ -40,7 +40,7 @@ const config: HardhatUserConfig = {
       accounts: accounts,
     },
     avaxtest: {
-      url: "https://api.avax-test.network/ext/bc/C/rpc",
+      url: "https://rpc.ankr.com/avalanche_fuji",
       chainId: 43113,
       accounts: accounts
     },
