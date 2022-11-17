@@ -77,7 +77,7 @@ main()
 
 ```
 
-### 5. 当代码准备完毕或clone后，运行各个scripts中的命令应该是能够正常执行的。例如执行以下命令后：
+### 5. 当代码准备完毕或clone后，运行各个scripts中的命令。例如执行以下命令后：
 ```
 yarn deploy --network ftmtest
 ```
@@ -448,7 +448,7 @@ contract PPXLand is ERC721, Ownable {
 }
 ```
 
-上述代码便是本次实现全链跨链的代码。在LayerZero中，消息是由LayerZero [Endpoint](https://layerzero.gitbook.io/docs/technical-reference/mainnet/supported-chain-ids) 发送和接收的，通过[LayerZeroEndpoint](https://layerzero.gitbook.io/docs/faq/layerzero-endpoint)来处理消息传输、验证、接收。本教程(一)只是简单实现了发送和接收，接下来将对代码进行一个简单的解析：
+上述代码便是本次实现全链跨链的代码。在LayerZero中，消息是由**LayerZero Endpoint**发送和接收的，通过[LayerZeroEndpoint](https://layerzero.gitbook.io/docs/faq/layerzero-endpoint)来处理消息传输、验证、接收。本教程(一)只是简单实现了发送和接收，接下来将对代码进行一个简单的解析：
 
 * lzEndpoint: lzEndpoint的值是当前链的endpoint，更多endpoint可查看[Mainnet Endpoint](https://layerzero.gitbook.io/docs/technical-reference/mainnet/supported-chain-ids)   [Testnet Endpoint](https://layerzero.gitbook.io/docs/technical-reference/testnet/testnet-addresses)，该地址用于合约调用其内部的发送和接收消息的函数来实现消息的传输。
 
