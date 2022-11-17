@@ -1,14 +1,8 @@
 [
     {
-        "contractName": "Greeter",
+        "contractName": "PPXLand",
         "chainId": "4002",
-        "address": "0x818e7F65Aa8295Ca49C6bD22FB9B4a86cEb180Ba",
+        "address": "0x4559E9409907198BF12F8061e901759E42A3460b",
         "netName": "ftmtest"
-    },
-    {
-        "contractName": "Greeter",
-        "chainId": "80001",
-        "address": "0x6EB9889cAe997fE5F23207E3409672D860256B8E",
-        "netName": "matictest"
     }
 ]

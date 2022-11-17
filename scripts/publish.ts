@@ -36,7 +36,7 @@ async function main() {
     `deploy-contracts.json`,
     `${JSON.stringify(abis, null, 4)}`
   );
-  console.log("✅ The ABI file is generated successfully.");
+  console.log("✅ The file is generated successfully.");
 }
 
 main()

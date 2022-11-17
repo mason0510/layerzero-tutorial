@@ -1,19 +1,29 @@
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { expect } from "chai";
+import { Contract } from "ethers";
 import { ethers } from "hardhat";
 
-describe("Greeter", function () {
-  it("Should return the new greeting once it's changed", async function () {
-    const Greeter = await ethers.getContractFactory("Greeter");
-    const greeter = await Greeter.deploy("Hello, world!");
-    await greeter.deployed();
+describe("PPXLand", function () {
+  let LandContract: Contract, owner: SignerWithAddress, owner2: SignerWithAddress;
 
-    expect(await greeter.greet()).to.equal("Hello, world!");
+  it("Deploy Contract", async function () {
+    const signers = await ethers.getSigners();
+    owner = signers[0];
+    owner2 = signers[1];
 
-    const setGreetingTx = await greeter.setGreeting("Hola, mundo!");
+    const Land = await ethers.getContractFactory("PPXLand");
+    LandContract = await Land.deploy();
+    await LandContract.deployed();
+    expect(await LandContract.ownerOf(0)).to.equal(owner.address);
+  });
 
-    // wait until the transaction is mined
-    await setGreetingTx.wait();
+  it("Mint NFT", async function () {
+    await LandContract.mint(owner.address, 1);
+    expect(await LandContract.ownerOf(1)).to.equal(owner.address);
 
-    expect(await greeter.greet()).to.equal("Hola, mundo!");
+    await LandContract.connect(owner2).mint(owner2.address, 2);
+    expect(await LandContract.ownerOf(2)).to.equal(owner2.address);
+
+    expect(await LandContract.totalSupply()).to.equal(3);
   });
 });

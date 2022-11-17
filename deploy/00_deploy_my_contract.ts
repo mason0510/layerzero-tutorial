@@ -2,13 +2,13 @@ module.exports = async ({ getNamedAccounts, deployments }: { getNamedAccounts: a
   const { deploy } = deployments;
   const { deployer } = await getNamedAccounts();
 
-  const greeter = await deploy("Greeter", {
+  const ppxland = await deploy("PPXLand", {
     from: deployer,
-    args: ["Hello, Hardhat!"],
+    args: [],
     log: true,
   });
 
-  console.log("Greeter deployed to:", greeter.address);
+  console.log("PPXLand deployed to:", ppxland.address);
 };
 
-module.exports.tags = ["Greeter"];
+module.exports.tags = ["PPXLand"];

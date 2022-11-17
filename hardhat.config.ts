@@ -8,6 +8,7 @@ import "hardhat-gas-reporter";
 import "@nomiclabs/hardhat-ethers";
 import "hardhat-deploy";
 import "solidity-coverage";
+import "./cross/index.ts";
 
 dotenv.config();
 
